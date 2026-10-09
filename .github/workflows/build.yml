@@ -35,7 +35,7 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-18 lld-18 ninja-build ffmpeg python3-pil fonts-dejavu-core
+          sudo apt-get install -y clang-18 lld-18 ninja-build ffmpeg python3-pil fonts-dejavu-core g++
       - name: Get native template
         run: |
           git clone https://github.com/blackbearreloaded/ps5-native-app-boilerplate.git native-app
@@ -44,6 +44,12 @@ jobs:
         run: |
           python3 prepare.py native-app
           cp converted-art/pic*.dds native-app/sce_sys/
+      - name: Verify media and audio configuration
+        run: |
+          g++ -std=c++20 -O1 -fsanitize=address,undefined tests/video_check.cpp -o video-check
+          ./video-check native-app/assets/loading.m1v native-app/assets/loop.m1v native-app/assets/rickroll.m1v
+          g++ -std=c++20 -O1 -fsanitize=address,undefined -ffunction-sections -fdata-sections tests/audio_check.cpp -Wl,--gc-sections -o audio-check
+          ./audio-check
       - name: Build application
         working-directory: native-app
         run: make app BUILD_JOBS=2 USE_CCACHE=0
